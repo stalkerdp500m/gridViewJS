@@ -1,13 +1,17 @@
 class GridView {
     /**
      * properies
+     * @param {string} label - заголовок колонки
      * @param [array] _tableClass - список калссов таблицы
      * @param [array] data - входные данные
      * @param [array] atribute - управляем что выводим
+     * @param [array] cellClass - массив классов для ячеек
      * @param {string} _element - управляем куда выводим
      * @param {string} _header - заголовок
      * @param [array] _headerClass - классы стилей заголовка
      * @param [array] _tableClass - классы стилей таблицы
+     * @param [function] convertFunc- функция преобразования данных для вывода ячейки
+     * @param [function] acton (type -тип действия,func - сама функция )- функция действия при клике на ячейку
      */
 
     constructor() {
@@ -76,7 +80,6 @@ class GridView {
  *
  */
     render () {
-        //  console.log(this);
         if (this._header != '') {
             let head = document.createElement('h1');
             head.textContent = this._header;
@@ -105,23 +108,38 @@ class GridView {
             }
             tableHead.append(trTabHead)
             table.append(tableHead);
-
-
             const tableBody = document.createElement('tbody');
             for (let i = 0; i < this.data.length; i++) {
                 const dataArr = this.data[i];
                 const tr = document.createElement('tr');
                 for (const key in this.atribute) {
-                    if (dataArr[key]) {
+                    if (dataArr.hasOwnProperty(key)) {
                         const td = document.createElement('td');
-                        td.textContent = dataArr[key];
+                        if (this.atribute[key].convertFunc) {
+                            if (this.atribute[key].returnHTMLobj) {
+                                td.append(this.atribute[key].convertFunc(dataArr));
+                            }
+                            else {
+                                td.innerHTML = this.atribute[key].convertFunc(dataArr[key]);
+                            }
+                        } else {
+                            td.textContent = dataArr[key];
+                        }
+                        if (this.atribute[key].acton) {
+                            td.addEventListener(this.atribute[key].acton.type, this.atribute[key].acton.func);
+                        }
+
                         if (this.atribute[key].cellClass) {
                             this.atribute[key].cellClass.map(clas => {
                                 td.classList.add(clas);
                             })
                         }
+                        if (this.atribute[key].cellFuncClass) {
+                            this.atribute[key].cellFuncClass(dataArr).map(clas => {
+                                td.classList.add(clas);
+                            })
+                        }
                         tr.append(td);
-                        // console.log(dataArr[key]);
                     }
                 }
                 tableBody.append(tr);
@@ -129,6 +147,11 @@ class GridView {
             table.append(tableBody);
             this._element.append(table);
         }
+    }
+
+    update () {
+        this._element.innerHTML = '';
+        this.render();
     }
 
 
